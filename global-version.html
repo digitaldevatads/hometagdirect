@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeTag Housing Data Tool</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState } = React;
+        
+        // Global API endpoint - works worldwide!
+        const API_ENDPOINT = "https://hometagdirect.onrender.com/api/housing-data/";
+
+        function HousingDataTool() {
+          const [zipInput, setZipInput] = useState("33065, 33063");
+          const [minOwnerOccupied, setMinOwnerOccupied] = useState(0);
+          const [results, setResults] = useState(null);
+          const [loading, setLoading] = useState(false);
+          const [error, setError] = useState(null);
+
+          const fetchData = async () => {
+            if (!zipInput.trim()) {
+              setError("Please enter at least one ZIP code");
+              return;
+            }
+
+            setLoading(true);
+            setError(null);
+            setResults(null);
+            
+            try {
+              const zipCodes = zipInput.split(',').map(z => z.trim()).filter(z => z);
+              const params = new URLSearchParams();
+              zipCodes.forEach(z => params.append("zip_codes", z));
+              if (minOwnerOccupied > 0) {
+                params.append("min_owner_occupied", minOwnerOccupied);
+              }
+              
+              const res = await fetch(`${API_ENDPOINT}?${params.toString()}`);
+              if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+              }
+              
+              const data = await res.json();
+              setResults(data.results);
+            } catch (e) {
+              setError(`Failed to fetch data: ${e.message}`);
+            } finally {
+              setLoading(false);
+            }
+          };
+
+          const handleKeyPress = (e) => {
+            if (e.key === 'Enter') {
+              fetchData();
+            }
+          };
+
+          const formatNumber = (num) => {
+            if (typeof num === 'number') {
+              return num.toLocaleString();
+            }
+            return num;
+          };
+
+          return React.createElement('div', {
+            style: { 
+              fontFamily: 'Arial, sans-serif', 
+              padding: '20px', 
+              maxWidth: '1200px', 
+              margin: 'auto',
+              backgroundColor: '#f8f9fa'
+            }
+          }, [
+            React.createElement('div', {
+              key: 'container',
+              style: {
+                backgroundColor: 'white',
+                padding: '30px',
+                borderRadius: '8px',
+                boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
+              }
+            }, [
+              React.createElement('div', {
+                key: 'success-banner',
+                style: {
+                  backgroundColor: '#d4edda',
+                  padding: '15px',
+                  borderRadius: '4px',
+                  marginBottom: '20px',
+                  border: '1px solid #c3e6cb',
+                  textAlign: 'center'
+                }
+              }, [
+                React.createElement('h4', {
+                  key: 'success-title',
+                  style: { margin: '0 0 10px 0', color: '#155724' }
+                }, '🌍 GLOBAL VERSION - WORKS WORLDWIDE!'),
+                React.createElement('p', {
+                  key: 'success-text',
+                  style: { margin: 0, color: '#155724', fontSize: '14px' }
+                }, 'This version connects to a globally accessible API hosted on Render.com')
+              ]),
+
+              React.createElement('h2', {
+                key: 'title',
+                style: { 
+                  color: '#004080', 
+                  marginBottom: '20px', 
+                  textAlign: 'center',
+                  fontSize: '28px'
+                }
+              }, 'HomeTag Housing Data Tool'),
+              
+              React.createElement('p', {
+                key: 'subtitle',
+                style: { 
+                  textAlign: 'center', 
+                  color: '#666', 
+                  marginBottom: '30px' 
+                }
+              }, 'Analyze housing and business data for targeted marketing campaigns'),
+
+              React.createElement('div', { key: 'zip-input', style: { marginBottom: '20px' }}, [
+                React.createElement('label', {
+                  key: 'zip-label',
+                  style: { 
+                    display: 'block', 
+                    marginBottom: '8px', 
+                    fontWeight: 'bold',
+                    color: '#333'
+                  }
+                }, 'Enter ZIP codes (comma separated):'),
+                React.createElement('input', {
+                  key: 'zip-field',
+                  type: 'text',
+                  value: zipInput,
+                  onChange: e => setZipInput(e.target.value),
+                  onKeyPress: handleKeyPress,
+                  style: { 
+                    width: '100%', 
+                    padding: '12px', 
+                    marginBottom: '15px',
+                    border: '2px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '16px',
+                    boxSizing: 'border-box'
+                  },
+                  placeholder: 'e.g. 33065, 33063, 10001'
+                })
+              ]),
+
+              React.createElement('div', { key: 'filter-input', style: { marginBottom: '25px' }}, [
+                React.createElement('label', {
+                  key: 'filter-label',
+                  style: { 
+                    display: 'block', 
+                    marginBottom: '8px', 
+                    fontWeight: 'bold',
+                    color: '#333'
+                  }
+                }, 'Minimum % Owner-Occupied (optional filter):'),
+                React.createElement('input', {
+                  key: 'filter-field',
+                  type: 'number',
+                  min: 0,
+                  max: 100,
+                  value: minOwnerOccupied,
+                  onChange: e => setMinOwnerOccupied(Number(e.target.value)),
+                  style: { 
+                    width: '150px', 
+                    padding: '10px', 
+                    border: '2px solid #ddd',
+                    borderRadius: '4px',
+                    fontSize: '16px'
+                  },
+                  placeholder: '0-100'
+                }),
+                React.createElement('span', { 
+                  key: 'percent-sign',
+                  style: { marginLeft: '10px', color: '#666' }
+                }, '%')
+              ]),
+
+              React.createElement('button', {
+                key: 'submit-btn',
+                onClick: fetchData,
+                disabled: loading,
+                style: { 
+                  padding: '12px 30px',
+                  backgroundColor: loading ? '#ccc' : '#004080',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.3s',
+                  marginRight: '10px'
+                }
+              }, loading ? "Loading..." : "Get Housing Data"),
+
+              React.createElement('a', {
+                key: 'github-btn',
+                href: 'https://github.com/digitaldevatads/hometagdirect',
+                target: '_blank',
+                style: { 
+                  display: 'inline-block',
+                  padding: '12px 20px',
+                  backgroundColor: '#333',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: '4px',
+                  fontSize: '14px',
+                  fontWeight: 'bold'
+                }
+              }, '⭐ View on GitHub'),
+
+              error && React.createElement('div', {
+                key: 'error',
+                style: { 
+                  color: '#d32f2f', 
+                  backgroundColor: '#ffebee',
+                  padding: '15px',
+                  marginTop: '20px',
+                  borderRadius: '4px',
+                  border: '1px solid #f8bbd9'
+                }
+              }, error),
+
+              results && results.length > 0 && React.createElement('div', { key: 'results', style: { marginTop: '30px' }}, [
+                React.createElement('h3', {
+                  key: 'results-title',
+                  style: { color: '#004080', marginBottom: '15px' }
+                }, `Results (${results.length} ZIP code${results.length !== 1 ? 's' : ''})`),
+                
+                React.createElement('div', { key: 'table-container', style: { overflowX: 'auto' }},
+                  React.createElement('table', {
+                    key: 'results-table',
+                    style: { 
+                      width: '100%', 
+                      borderCollapse: 'collapse',
+                      backgroundColor: 'white',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }
+                  }, [
+                    React.createElement('thead', { key: 'table-head' },
+                      React.createElement('tr', { 
+                        key: 'header-row',
+                        style: { backgroundColor: '#004080', color: 'white' }
+                      }, [
+                        React.createElement('th', { key: 'h1', style: { padding: '12px 8px', textAlign: 'center', fontSize: '14px' }}, 'ZIP Code'),
+                        React.createElement('th', { key: 'h2', style: { padding: '12px 8px', textAlign: 'center', fontSize: '14px' }}, 'Total Units'),
+                        React.createElement('th', { key: 'h3', style: { padding: '12px 8px', textAlign: 'center', fontSize: '14px' }}, 'Owner-Occupied'),
+                        React.createElement('th', { key: 'h4', style: { padding: '12px 8px', textAlign: 'center', fontSize: '14px' }}, 'Renter-Occupied'),
+                        React.createElement('th', { key: 'h5', style: { padding: '12px 8px', textAlign: 'center', fontSize: '14px' }}, 'Single-Family'),
+                        React.createElement('th', { key: 'h6', style: { padding: '12px 8px', textAlign: 'center', fontSize: '14px' }}, 'Apartments'),
+                        React.createElement('th', { key: 'h7', style: { padding: '12px 8px', textAlign: 'center', fontSize: '14px' }}, 'Businesses'),
+                        React.createElement('th', { key: 'h8', style: { padding: '12px 8px', textAlign: 'center', fontSize: '14px' }}, '% Owner Occupied')
+                      ])
+                    ),
+                    React.createElement('tbody', { key: 'table-body' },
+                      results.map((r, index) =>
+                        React.createElement('tr', {
+                          key: r.zip_code,
+                          style: { 
+                            backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white',
+                            borderBottom: '1px solid #e0e0e0'
+                          }
+                        }, [
+                          React.createElement('td', { key: 'zip', style: { padding: '12px 8px', textAlign: 'center', fontWeight: 'bold' }}, r.zip_code),
+                          React.createElement('td', { key: 'total', style: { padding: '12px 8px', textAlign: 'center' }}, r.error ? '-' : formatNumber(r.total_units)),
+                          React.createElement('td', { key: 'owner', style: { padding: '12px 8px', textAlign: 'center' }}, r.error ? '-' : formatNumber(r.owner_occupied_units)),
+                          React.createElement('td', { key: 'renter', style: { padding: '12px 8px', textAlign: 'center' }}, r.error ? '-' : formatNumber(r.renter_occupied_units)),
+                          React.createElement('td', { key: 'single', style: { padding: '12px 8px', textAlign: 'center' }}, r.error ? '-' : formatNumber(r.single_family_detached_units)),
+                          React.createElement('td', { key: 'apts', style: { padding: '12px 8px', textAlign: 'center' }}, r.error ? '-' : formatNumber(r.apartments_units)),
+                          React.createElement('td', { key: 'biz', style: { padding: '12px 8px', textAlign: 'center' }}, r.error ? '-' : formatNumber(r.business_establishments)),
+                          React.createElement('td', { 
+                            key: 'percent',
+                            style: { 
+                              padding: '12px 8px', 
+                              textAlign: 'center',
+                              fontWeight: 'bold',
+                              color: r.error ? '#999' : '#004080'
+                            }
+                          }, r.error ? r.error : `${r.percent_owner_occupied}%`)
+                        ])
+                      )
+                    )
+                  ])
+                )
+              ])
+            ])
+          ]);
+        }
+
+        ReactDOM.render(React.createElement(HousingDataTool), document.getElementById('root'));
+    </script>
+</body>
+</html>
